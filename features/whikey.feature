@@ -2,8 +2,13 @@
 
 Feature: Wiki JSON format is handled like a charm
 
+Scenario: Get remote JSON
+	Given we have a term "Barcelona"
+	When we retrieve the content from remote
+	Then the result is stored in cache folder
+
 	Scenario: Get remote JSON
-		Given we have a term "Barcelona"
+		Given we have a term "Barce"
 		When we retrieve the content from remote
 		Then the result is stored in cache folder
 

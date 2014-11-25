@@ -1,7 +1,13 @@
 # encoding: utf-8
 
+require_relative 'parsers/infobox.rb'
+
 module Whikey
   class Parser
+    COMMENT = /\s*<!--(.*?)-->\s*/m
+    ENTITY = /(?<match>\{\{((\g<match>|[^\{\}]*))*\}\})/m
+    SUBENTITY = /\{\{(\s*(?<key>\w+)\s*\|\s*(?<value>[^=\{\}]*)+)\}\}/m
+
     ENTITIES = {
       :geolocation => {
         :full => /((((lat|long)(d|m|s|NS|EW))\s*=.*?\|\s*){8})/m,
@@ -11,10 +17,23 @@ module Whikey
         :full => /{{Infobox }}/
       }
     }
+
     def initialize term, lang = :en
       require 'json'
       @text = Crawler.new(term, lang).content
-      @text = @text.gsub /\\n/, ' '
+      @text = @text.gsub COMMENT, ' '
+      @text.scan(ENTITY) { |item|
+        item[0].scan(/\A\{\{(\w+)\s+(\w+).*\}\}\Z/m) { |atom|
+          if(Class::const_get())
+          puts '*'*40
+puts $~[1]
+puts $~[2]
+        }
+      }
+    end
+
+    def atom input
+
     end
 
     def method_missing method, *args, &cb
