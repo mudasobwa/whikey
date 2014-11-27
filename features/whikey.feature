@@ -20,6 +20,6 @@ Scenario: Get remote JSON
 
 		Examples:
         | input                          | output                             |
-        | "geolocation"                  | "{"latd"=>"41", "latm"=>"23", "lats"=>"", "latNS"=>"N", "longd"=>"2", "longm"=>"11", "longs"=>"", "longEW"=>"E"}" |
+        | "geo"                  | "41.38333333333333,2.183333333333333" |
 
 ###############################################################################

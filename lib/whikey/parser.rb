@@ -1,52 +1,38 @@
 # encoding: utf-8
 
+require_relative 'parsers/generic.rb'
 require_relative 'parsers/infobox.rb'
 
 module Whikey
-  class Parser
+  module Parsers
     COMMENT = /\s*<!--(.*?)-->\s*/m
-    ENTITY = /(?<match>\{\{((\g<match>|[^\{\}]*))*\}\})/m
-    SUBENTITY = /\{\{(\s*(?<key>\w+)\s*\|\s*(?<value>[^=\{\}]*)+)\}\}/m
+    ENTITIES = /(?<match>{{((\g<match>|[^{}]*))*}})/m # Till matched curly brackets
+    ENTITY = /{{(?<type>[\w\-]+)\s*(?<name>[^|]*)\|(?<content>.*)}}/m
+    SUBENTITY = /{{(?<title>[^|{}]+)\|(?<content>[^{}]*)}}/m
+    LINK = /\[\[(?<title>[^|\[\]]*)\|(?<link>[^\[\]]*)\]\]/m
+    VALUE = /(?<=\A|\|)(?<key>[^=]+)=(?<value>[^|]*)(?=\Z|\|)/m
 
-    ENTITIES = {
-      :geolocation => {
-        :full => /((((lat|long)(d|m|s|NS|EW))\s*=.*?\|\s*){8})/m,
-        :partial => /\s*(\w+)\s*=\s*(\w*)\s*\|/m
-      },
-      :infobox => {
-        :full => /{{Infobox }}/
-      }
-    }
-
-    def initialize term, lang = :en
+    def self.handle term, lang = :en
       require 'json'
-      @text = Crawler.new(term, lang).content
-      @text = @text.gsub COMMENT, ' '
-      @text.scan(ENTITY) { |item|
-        item[0].scan(/\A\{\{(\w+)\s+(\w+).*\}\}\Z/m) { |atom|
-          if(Class::const_get())
-          puts '*'*40
-puts $~[1]
-puts $~[2]
-        }
+      content = {}
+      text = Crawler.new(term, lang).content
+      text.scan(ENTITIES) { |item|
+        type, name, data = ENTITY.match(item.first) do |mtch|
+          [mtch['type'], mtch['name'], mtch['content']].map(&:strip)
+        end
+        next if type.nil? || type.empty?
+        data.gsub! SUBENTITY, '❴\k<title>¦\k<content>❵'
+        data.gsub! LINK, '⦃\k<title>¦\k<link>⦄'
+        clazz = begin
+                  Object::const_get("Whikey::Parsers::#{type}")
+                rescue NameError
+                  next
+                  Object::const_get("Whikey::Parsers::Generic")
+                end
+        (content[type] ||= []) << clazz.new(name, data)
       }
+      content
     end
 
-    def atom input
-
-    end
-
-    def method_missing method, *args, &cb
-      return super unless ENTITIES.has_key? method
-      return ENTITIES[method][:result] if ENTITIES[method][:result]
-
-      ENTITIES[method][:result] = {}
-      @text.scan(ENTITIES[method][:full]) { |loc|
-        loc[0].scan(ENTITIES[method][:partial]) { |ent|
-          ENTITIES[method][:result][ent.first] = ent.last
-        }
-      }
-      ENTITIES[method][:result]
-    end
   end
 end

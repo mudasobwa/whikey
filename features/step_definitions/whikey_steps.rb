@@ -17,7 +17,7 @@ When(/^we retrieve the content from remote$/) do
 end
 
 When(/^we initialize 'Parser' with this term$/) do
-  @parser = Whikey::Parser.new @term
+  @parser = Whikey::Parsers.handle(@term)['Infobox'].first
 end
 
 When(/^we request "(.*?)" tag from parser$/) do |tag|
